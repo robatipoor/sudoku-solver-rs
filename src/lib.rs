@@ -1,3 +1,5 @@
+use std::process::exit;
+
 pub struct Sudoku {
     pub matrix: [[u32; 9]; 9],
 }
@@ -41,33 +43,26 @@ impl Sudoku {
     pub fn possible(&self, x: usize, y: usize, value: u32) -> bool {
         let rx = (x / 3) * 3;
         let ry = (y / 3) * 3;
-        'MAIN_LOOP: for v in 1..=9 {
-            for i in self.matrix[x].iter() {
-                if *i == v {
-                    //println!("i[x] => {} so con... x == {}", v, x);
-                    continue 'MAIN_LOOP;
-                }
-            }
-            for i in self.matrix.iter() {
-                if i[y] == v {
-                    //println!("i[y] => {} so con... y == {}", v, y);
-                    continue 'MAIN_LOOP;
-                }
-            }
-            for i in 0..3 {
-                for j in 0..3 {
-                    if self.matrix[rx + i][ry + j] == v {
-                        continue 'MAIN_LOOP;
-                    }
-                }
-            }
-            if possible.is_empty() {
-                possible.push(v);
-            } else {
-                return None;
+        for i in self.matrix[x].iter() {
+            if *i == value {
+                //println!("i[x] => {} so con... x == {}", v, x);
+                return false;
             }
         }
-        Some(possible.remove(0))
+        for i in self.matrix.iter() {
+            if i[y] == value {
+                //println!("i[y] => {} so con... y == {}", v, y);
+                return false;
+            }
+        }
+        for i in 0..3 {
+            for j in 0..3 {
+                if self.matrix[rx + i][ry + j] == value {
+                    return false;
+                }
+            }
+        }
+        true
     }
 
     pub fn easy_solve(&mut self) {
@@ -89,7 +84,25 @@ impl Sudoku {
         }
     }
 
-    pub fn hard_solve(&mut self) {}
+    pub fn hard_solve(&mut self) {
+        for x in 0..9 {
+            for y in 0..9 {
+                if self.matrix[x][y] == 0 {
+                    for v in 1..=9 {
+                        if self.possible(x, y, v) {
+                            println!("possible {} {} => {}", x, y, v);
+                            self.matrix[x][y] = v;
+                            self.hard_solve();
+                            if !self.is_solved() {
+                                self.matrix[x][y] = 0;
+                            }
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+    }
 
     pub fn solve(&mut self) -> [[u32; 9]; 9] {
         self.easy_solve();
@@ -97,6 +110,7 @@ impl Sudoku {
             return self.matrix;
         } else {
             self.hard_solve();
+            print!("hard solve");
             return self.matrix;
         }
     }
@@ -132,7 +146,7 @@ pub mod tests {
                 [0, 0, 0, 6, 4, 8, 0, 9, 3],
             ],
         };
-        sudoku.easy_solve();
+        sudoku.solve();
         println!("{:?}", sudoku.matrix);
     }
 }
